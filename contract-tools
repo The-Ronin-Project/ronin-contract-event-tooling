@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+VERSIONS=$(ls | grep -E '^v\d+$')
+
+case $1 in 
+
+    test)
+        echo Validating all versions: ${VERSIONS}
+        for v in ${VERSIONS}
+        do 
+            schema=$(ls ${v}/*-${v}.schema.json)
+            echo Validating schema \'${schema}\'
+            for example in $(ls ${v}/examples/*.json)
+            do 
+                echo Validating example \'${example}\' against \'${schema}\'
+                output=$(ajv -s ${schema} -d ${example} -c ajv-formats)
+                success=$?
+                echo ${output}
+                if [[ ${success} -ne 0 ]]; then 
+                    exit 1
+                fi
+            done 
+        done
+        ;;
+
+    doc)
+        echo Generating documentation for all versions: ${VERSIONS}
+        for v in ${VERSIONS}
+        do 
+            schema=$(ls ${v}/*-${v}.schema.json)
+            mkdir -p ${v}/docs
+            echo Generating documentation for \'${schema}\'
+            output=$(generate-schema-doc ${schema} ./${v}/docs)
+            success=$?
+            echo ${output}
+            if [[ ${success} -ne 0 ]]; then
+                exit 1
+            fi
+        done
+        ;;
+
+    clean)
+        echo "Cleaning generated files"
+        for v in ${VERSIONS}
+        do 
+            rm -rf ${v}/docs/*
+        done
+        ;;
+        
+    *)
+        echo "Unknown command '$1'" >&2
+        echo "Usage: contract-tools [test|doc|clean]" >&2
+        ;;
+esac
