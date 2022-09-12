@@ -51,7 +51,7 @@ jobs:
       - name: Get image tag
         id: get_image_tag
         run: |-
-          TAG=$(echo "$(git rev-parse --short HEAD))
+          TAG=$(echo "$(git rev-parse --short HEAD)")
           echo ${TAG}
           echo ::set-output name=image_tag::$(echo "${TAG}")
 
