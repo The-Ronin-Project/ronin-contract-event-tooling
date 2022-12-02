@@ -8,8 +8,7 @@ This docker image contains the tooling used to validate JSON schema contracts as
 Validation tooling is based on [ajv-cli](https://github.com/ajv-validator/ajv-cli) and [ajv-formats](https://github.com/ajv-validator/ajv-formats). 
 
 ## Docs
-Documentation generation uses [json-schema-for-humans](https://github.com/coveooss/
-json-schema-for-humans). 
+Documentation generation uses [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans). 
 
 # Usage
 `docker run -it -v "<schema_root_directory>:/app" ronin-contract-event-tooling:<tag> contract-tools [clean|test|doc]`
