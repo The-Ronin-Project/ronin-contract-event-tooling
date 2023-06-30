@@ -93,14 +93,6 @@ class EventContractPlugin : Plugin<Project> {
             fun nexusUsername(project: Project): String? = project.properties.getOrDefault("nexus-user", System.getenv("NEXUS_USER"))?.toString()
             fun nexusPassword(project: Project): String? = project.properties.getOrDefault("nexus-password", System.getenv("NEXUS_TOKEN"))?.toString()
             fun isNexusInsecure(project: Project): Boolean = project.properties.getOrDefault("nexus-insecure", "false").toString().toBoolean()
-            fun dockerLocation(project: Project): String = project.properties.getOrDefault(
-                "docker-location",
-                if (File("/usr/local/bin/docker").exists()) {
-                    "/usr/local/bin/docker"
-                } else {
-                    "docker"
-                }
-            ).toString()
         }
     }
 

@@ -27,9 +27,6 @@ dependencies {
     implementation(libs.json.schema.validator)
     implementation(libs.jsonschematopojo)
     implementation(libs.axion.release)
-    implementation(platform("com.github.docker-java:docker-java-bom:3.3.1"))
-    implementation("com.github.docker-java:docker-java-core")
-    implementation("com.github.docker-java:docker-java-transport-zerodep")
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)

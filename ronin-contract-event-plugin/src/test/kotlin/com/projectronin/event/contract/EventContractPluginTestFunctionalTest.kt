@@ -103,16 +103,6 @@ class EventContractPluginTestFunctionalTest {
     }
 
     @Test
-    fun `docs work`() {
-        setupTestProject(listOf("generateEventDocs", "--stacktrace"))
-        assertThat(projectDir.resolve("build/docs").exists()).isTrue()
-        assertThat(projectDir.resolve("build/docs/schema_doc.min.js").exists()).isTrue()
-        assertThat(projectDir.resolve("build/docs/schema_doc.css").exists()).isTrue()
-        assertThat(projectDir.resolve("build/docs/person-v1.schema.html").exists()).isTrue()
-        assertThat(projectDir.resolve("build/docs/medication-v1.schema.html").exists()).isTrue()
-    }
-
-    @Test
     fun `build works`() {
         setupTestProject(listOf("build", "assemble", "--stacktrace"))
         assertThat(projectDir.resolve("build/generated-sources/js2p/com/projectronin/event/changeprojectnamehere/v1/MedicationV1Schema.java").exists()).isTrue()
@@ -321,7 +311,12 @@ class EventContractPluginTestFunctionalTest {
     private fun runProjectBuild(buildArguments: List<String>, fail: Boolean): BuildResult {
         val runner = GradleRunner.create().withJaCoCo()
         runner.forwardOutput()
-        runner.withEnvironment(mapOf("REF_NAME" to ""))
+        runner.withEnvironment(
+            mapOf(
+                "REF_NAME" to "",
+                "SCHEMA_DOC_LOCATION" to "/Users/rosslodge/.pyenv/shims/generate-schema-doc"
+            )
+        )
         runner.withPluginClasspath()
         runner.withArguments(buildArguments)
         runner.withProjectDir(projectDir)

@@ -50,10 +50,6 @@ jobs:
 
       - name: Login to Repo
         run: |-
-          which python
-          which python3
-          which pip
-          which pip3
           docker login \
           -u "${{secrets.NEXUS_DOCKER_USERNAME}}" \
           -p "${{secrets.NEXUS_DOCKER_PASSWORD}}" \
@@ -82,14 +78,13 @@ jobs:
             echo "Second tag: ${SECOND_TAG}"
           fi
           echo "second_tag=${SECOND_TAG}" >> "$GITHUB_ENV"
-          echo "docker_location=$(which docker)" >> "$GITHUB_ENV"
         env:
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.head_ref || github.ref_name }}
 
       - name: Gradle build
         id: generate_artifact
-        run: ./gradlew clean build -Pdocker-location="${{ env.docker_location }}" "${{ env.force_snapshot }}"
+        run: ./gradlew clean build "${{ env.force_snapshot }}"
         env:
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.head_ref || github.ref_name }}
