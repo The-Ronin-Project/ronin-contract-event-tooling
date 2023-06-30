@@ -118,7 +118,7 @@ class EventContractPlugin : Plugin<Project> {
             versionCreator { versionFromTag, position ->
                 val branchName = System.getenv("REF_NAME")?.ifBlank { null } ?: position.branch
                 val supportedHeads = setOf("master", "main")
-                if (!supportedHeads.contains(branchName)) {
+                if (!supportedHeads.contains(branchName) && !branchName.matches("^version/v\\d+$".toRegex())) {
                     val jiraBranchRegex = Regex("(?:.*/)?(\\w+)-(\\d+)-(.+)")
                     val match = jiraBranchRegex.matchEntire(branchName)
                     val branchExtension = match?.let {
