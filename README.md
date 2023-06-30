@@ -1,18 +1,17 @@
-# Event Contract Tooling docker image
+# Event Contract Tooling
 
-This docker image contains the tooling used to validate JSON schema contracts as well as generate documentation from the
-schema.
+This project builds a gradle plugin (see [ronin-contract-event-plugin](ronin-contract-event-plugin)) and a docker image that _runs_ that gradle plugin if you don't
+want to install gradle locally.
 
 # Gradle Plugin
 
-For information on the Gradle variant, see [ronin-contract-event-plugin](ronin-contract-event-plugin).
+For information on the Gradle plugin, see [ronin-contract-event-plugin](ronin-contract-event-plugin).
 
 # Tools
 
 ## Validation
 
-Validation tooling is based on [ajv-cli](https://github.com/ajv-validator/ajv-cli)
-and [ajv-formats](https://github.com/ajv-validator/ajv-formats).
+Validation is done though the gradle plugin, using [com.networknt:json-schema-validator](https://github.com/networknt/json-schema-validator).
 
 ## Docs
 
@@ -20,10 +19,12 @@ Documentation generation uses [json-schema-for-humans](https://github.com/coveoo
 
 # Usage
 
-`docker run -it -v "<schema_root_directory>:/app" ronin-contract-event-tooling:<tag> contract-tools [clean|test|doc]`
+`docker run -it -v "<schema_root_directory>:/app" ronin-contract-event-tooling:<tag> contract-tools [clean|test|doc|initialize]`
 
-`clean`: Remove all generated files.
+`clean` (deprecated: use gradle plugin): Remove all generated files.
 
-`test`: Test all versioned schemas against the curated examples.
+`test` (deprecated: use gradle plugin): Test all versioned schemas against the curated examples.
 
-`docs`: Generate HTML documentation for each versioned schema.
+`docs` (deprecated: use gradle plugin): Generate HTML documentation for each versioned schema.
+
+`initialize`: Updates a Makefile/docker image based repository to use the updated plugin.  Note that it will overwrite any gradle files already in the repository (or maybe it will fail).

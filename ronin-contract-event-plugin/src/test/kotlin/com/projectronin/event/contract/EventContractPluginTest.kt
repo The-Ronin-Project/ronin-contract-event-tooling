@@ -1,100 +1,55 @@
 package com.projectronin.event.contract
 
-import com.projectronin.event.contract.task.CleanTask
-import com.projectronin.event.contract.task.DocumentationTask
-import com.projectronin.event.contract.task.TestTask
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.verify
-import org.gradle.api.Action
+import com.networknt.schema.SpecVersion
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.plugins.ExtensionContainer
-import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.Test
 
 class EventContractPluginTest {
-    private val mockExtensions = mockk<ExtensionContainer>(relaxed = true)
-    private val mockTasks = mockk<TaskContainer>(relaxed = true) {
-        every { register(any(), any()) } returns mockk()
-        every { getByName(any(), any<Action<Task>>()) } returns mockk()
+    private fun getProject(): Project {
+        val project = ProjectBuilder.builder().withName("simple-test-project").build()
+        project.plugins.apply("com.projectronin.event.contract")
+        return project
     }
-    private val project = mockk<Project>(relaxed = true) {
-        every { extensions } returns mockExtensions
-        every { tasks } returns mockTasks
-    }
-    private val plugin = EventContractPlugin()
 
     @Test
     fun `registers extension`() {
-        plugin.apply(project)
+        val project = getProject()
 
-        verify(exactly = 1) {
-            mockExtensions.create(
-                EventContractExtension.NAME,
-                EventContractExtension::class.java
-            )
-        }
-    }
-
-    @Test
-    fun `registers cleanEvents task`() {
-        plugin.apply(project)
-
-        verify(exactly = 1) {
-            mockTasks.register("cleanEvents", CleanTask::class.java)
-        }
-    }
-
-    @Test
-    fun `associates cleanEvents task with clean`() {
-        val cleanEventTask = mockk<TaskProvider<CleanTask>>()
-        every { mockTasks.register("cleanEvents", CleanTask::class.java) } returns cleanEventTask
-
-        val actionSlot = slot<Action<Task>>()
-        every { mockTasks.getByName("clean", capture(actionSlot)) } returns mockk()
-
-        plugin.apply(project)
-
-        val task = mockk<Task>(relaxed = true)
-        actionSlot.captured.execute(task)
-
-        verify(exactly = 1) { task.dependsOn(cleanEventTask) }
+        val extension = project.extensions.findByName(EventContractExtension.NAME) as EventContractExtension
+        assertThat(extension).isNotNull
+        assertThat(extension.schemaSourceDir.get().asFile.absolutePath).isEqualTo("${project.rootDir.absolutePath}/src/main/resources/schemas")
+        assertThat(extension.exampleSourceDir.get().asFile.absolutePath).isEqualTo("${project.rootDir.absolutePath}/src/test/resources/examples")
+        assertThat(extension.specVersion.get()).isEqualTo(SpecVersion.VersionFlag.V201909)
+        assertThat(extension.ignoredValidationKeywords.get()).isEmpty()
+        assertThat(extension.packageName.get()).isEqualTo("com.projectronin.event.simpletestproject")
     }
 
     @Test
     fun `registers testEvents task`() {
-        plugin.apply(project)
+        val project = getProject()
 
-        verify(exactly = 1) {
-            mockTasks.register("testEvents", TestTask::class.java)
-        }
+        val testTask = project.tasks.findByName("testEvents")
+        assertThat(testTask).isNotNull
     }
 
     @Test
     fun `associates testEvents task with check`() {
-        val testEventsTask = mockk<TaskProvider<TestTask>>()
-        every { mockTasks.register("testEvents", TestTask::class.java) } returns testEventsTask
+        val project = getProject()
 
-        val actionSlot = slot<Action<Task>>()
-        every { mockTasks.getByName("check", capture(actionSlot)) } returns mockk()
-
-        plugin.apply(project)
-
-        val task = mockk<Task>(relaxed = true)
-        actionSlot.captured.execute(task)
-
-        verify(exactly = 1) { task.dependsOn(testEventsTask) }
+        val checkTask = project.tasks.findByName("check")
+        val testTask = project.tasks.findByName("testEvents")
+        assertThat(checkTask).isNotNull()
+        assertThat(checkTask?.dependsOn?.find { it is TaskProvider<*> && it.get() == testTask }).isNotNull
     }
 
     @Test
     fun `registers generateEventDocs task`() {
-        plugin.apply(project)
+        val project = getProject()
 
-        verify(exactly = 1) {
-            mockTasks.register("generateEventDocs", DocumentationTask::class.java)
-        }
+        val docsTask = project.tasks.findByName("generateEventDocs")
+        assertThat(docsTask).isNotNull()
     }
 }

@@ -9,7 +9,7 @@ import com.networknt.schema.SpecVersion
 import com.networknt.schema.ValidationMessage
 import com.networknt.schema.uri.URIFactory
 import com.projectronin.event.contract.EventContractExtension
-import com.projectronin.event.contract.config
+import com.projectronin.event.contract.eventContractExtension
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
 import java.io.File
@@ -30,40 +30,36 @@ open class TestTask : BaseEventTask() {
      */
     @TaskAction
     fun testSchema(): List<String> {
+        val config = project.eventContractExtension()
+
         val allSchemaFiles = mutableListOf<File>()
+        val directory = config.schemaSourceDir.get().asFile
 
-        val errorsByExampleByVersion = getVersionDirectories().mapNotNull { directory ->
-            val version = directory.name
+        val errorsByExampleByVersion = run {
+            logger.lifecycle("Testing schemas for ${directory.name}")
 
-            logger.lifecycle("Testing schemas for $version")
-
-            val schemaFiles = directory.listFiles { f -> f.name.endsWith("-$version.schema.json") }.toList()
+            val schemaFiles = directory.listFiles { f -> f.name.endsWith(".schema.json") }?.toList() ?: emptyList()
             allSchemaFiles.addAll(schemaFiles)
             val errorsByExample = when (schemaFiles.size) {
-                0 -> throw IllegalStateException("No schema files found in $version")
-                1 -> testSingleSchema(schemaFiles.first(), directory)
-                else -> testMultipleSchema(schemaFiles, directory)
+                0 -> throw IllegalStateException("No schema files found in ${directory.name}")
+                1 -> testSingleSchema(schemaFiles.first())
+                else -> testMultipleSchema(schemaFiles)
             }
 
             logger.lifecycle("")
 
-            if (errorsByExample.isEmpty()) {
+            errorsByExample.ifEmpty {
                 null
-            } else {
-                directory.name to errorsByExample
             }
         }
 
-        if (errorsByExampleByVersion.isEmpty()) {
+        if (errorsByExampleByVersion.isNullOrEmpty()) {
             return allSchemaFiles.map { it.name }
         }
 
-        errorsByExampleByVersion.forEach { (version, errorsByExample) ->
-            logger.error("Errors for $version:")
-            errorsByExample.forEach { (example, errors) ->
-                errors.forEach { error ->
-                    logger.error("$example: $error")
-                }
+        errorsByExampleByVersion.forEach { (example, errors) ->
+            errors.forEach { error ->
+                logger.error("$example: $error")
             }
             logger.error("")
         }
@@ -75,10 +71,10 @@ open class TestTask : BaseEventTask() {
      * Tests the schema [file] from the version [directory], returning any [ValidationMessage]s associated to their example file.
      * This will run the schema against all examples present in the [directory].
      */
-    private fun testSingleSchema(file: File, directory: File): Map<String, Set<ValidationMessage>> {
+    private fun testSingleSchema(file: File): Map<String, Set<ValidationMessage>> {
         val schema = getSchema(file)
 
-        val examples = getExamples(directory)
+        val examples = getExamples(project.eventContractExtension().exampleSourceDir.get().asFile)
         if (examples.isEmpty()) {
             logger.lifecycle("${file.name} NO TESTS")
             return emptyMap()
@@ -93,13 +89,12 @@ open class TestTask : BaseEventTask() {
      * Tests all of the supplied schema [files] from the version [directory], returning any [ValidationMessage]s associated to their example file.
      * This will run each schema against the examples associated to it in the [directory]. The examples are determined by the schema's core name, which is the value prior to the "-vN.schema.json"
      */
-    private fun testMultipleSchema(files: List<File>, directory: File): Map<String, Set<ValidationMessage>> {
+    private fun testMultipleSchema(files: List<File>): Map<String, Set<ValidationMessage>> {
         return files.sortedBy { it.name }.flatMap { file ->
             val schema = getSchema(file)
-            val primarySchemaName =
-                Regex("(.+)-${directory.name}.schema.json").matchEntire(file.name)!!.destructured.component1()
+            val primarySchemaName = Regex("(.+).schema.json").matchEntire(file.name)!!.destructured.component1().replace("-v\\d+".toRegex(), "")
 
-            val examples = getExamples(directory) { it.name.startsWith("$primarySchemaName-") }
+            val examples = getExamples(project.eventContractExtension().exampleSourceDir.get().asFile) { it.name.startsWith(primarySchemaName) }
             val results = testExamples(schema, examples)
             if (results.isEmpty()) {
                 logger.lifecycle("${file.name} ${if (examples.isEmpty()) "NO TESTS" else "PASSED"}")
@@ -149,7 +144,9 @@ open class TestTask : BaseEventTask() {
             override fun create(baseURI: URI, segment: String): URI {
                 val start = if (schemaId != null && baseURI.toString().startsWith(schemaId)) {
                     getLocalUri(schemaUri, schemaId, baseURI)
-                } else baseURI
+                } else {
+                    baseURI
+                }
 
                 val uri = try {
                     URL(start.toURL(), segment).toURI()
@@ -162,7 +159,7 @@ open class TestTask : BaseEventTask() {
             }
         }
 
-        val config = project.config()
+        val config = project.eventContractExtension()
         val baseFactory = getBaseJsonSchemaFactory(config)
         val factory = JsonSchemaFactory.builder(baseFactory)
             .uriFactory(uriFactory, "http", "https")
@@ -174,10 +171,10 @@ open class TestTask : BaseEventTask() {
      * Creates the base [JsonSchemaFactory] based off the supplied [config].
      */
     private fun getBaseJsonSchemaFactory(config: EventContractExtension): JsonSchemaFactory {
-        return if (config.ignoredValidationKeywords.isEmpty()) {
-            JsonSchemaFactory.getInstance(config.specVersion)
+        return if (config.ignoredValidationKeywords.get().isEmpty()) {
+            JsonSchemaFactory.getInstance(config.specVersion.get())
         } else {
-            val baseMetaSchema = when (config.specVersion) {
+            val baseMetaSchema = when (config.specVersion.get()) {
                 SpecVersion.VersionFlag.V4 -> JsonMetaSchema.getV4()
                 SpecVersion.VersionFlag.V6 -> JsonMetaSchema.getV6()
                 SpecVersion.VersionFlag.V7 -> JsonMetaSchema.getV7()
@@ -186,7 +183,7 @@ open class TestTask : BaseEventTask() {
                 else -> throw IllegalStateException("SpecVersion ${config.specVersion} is not currently supported.")
             }
 
-            val keywords = config.ignoredValidationKeywords.map { NonValidationKeyword(it) }.toList()
+            val keywords = config.ignoredValidationKeywords.get().map { NonValidationKeyword(it) }.toList()
             val metaSchema = JsonMetaSchema.builder(baseMetaSchema.uri, baseMetaSchema).addKeywords(keywords).build()
             JsonSchemaFactory.Builder().defaultMetaSchemaURI(metaSchema.uri).addMetaSchema(metaSchema).build()
         }
@@ -207,6 +204,6 @@ open class TestTask : BaseEventTask() {
      * Retrieves the examples from the [directory] and applies a [filter] to the returned files. If no [filter] is provided, all files in the [directory] will be returned.
      */
     private fun getExamples(directory: File, filter: (File) -> Boolean = { true }): List<File> =
-        directory.listFiles { f -> f.name == "examples" && f.isDirectory }.singleOrNull()?.listFiles(filter)?.toList()
+        directory.listFiles(filter)?.toList()
             ?: emptyList()
 }

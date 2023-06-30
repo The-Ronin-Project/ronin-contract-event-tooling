@@ -1,12 +1,10 @@
-rootProject.name = "ronin-contract-event-tooling"
-
-include("ronin-contract-event-plugin")
-
-for (project in rootProject.children) {
-    project.buildFileName = "${project.name}.gradle.kts"
-}
+rootProject.name = "change-project-name-here"
 
 pluginManagement {
+    plugins {
+        id("com.projectronin.event.contract") version "@projectVersion@"
+    }
+
     repositories {
         maven {
             url = uri("https://repo.devops.projectronin.io/repository/maven-public/")

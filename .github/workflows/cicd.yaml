@@ -1,0 +1,131 @@
+name: Build and publish
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - '*.*.*'
+  pull_request:
+jobs:
+  image-publish:
+    runs-on: self-hosted
+    outputs:
+      changed_files: ${{ steps.changes.outputs.changed_files}}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Context for Buildx
+        id: buildx-context
+        run: docker context create builder
+
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v1
+        with:
+          image: docker-proxy.devops.projectronin.io/tonistiigi/binfmt:latest
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          install: true
+          endpoint: builder
+          driver-opts: image=docker-proxy.devops.projectronin.io/moby/buildkit:v0.10.6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17
+          distribution: "temurin"
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install DataDog CI
+        run:
+          npm install -g @datadog/datadog-ci
+
+      - name: Login to Repo
+        run: |-
+          which python
+          which python3
+          which pip
+          which pip3
+          docker login \
+          -u "${{secrets.NEXUS_DOCKER_USERNAME}}" \
+          -p "${{secrets.NEXUS_DOCKER_PASSWORD}}" \
+          ${{ vars.DOCKER_WRITE_REPO }}
+
+      - name: Get image tag
+        id: get_image_tag
+        run: |-
+          echo "============================ TAGS ==============================="
+          git tag
+          echo "================================================================="
+          force_snapshot="-Prelease.forceSnapshot"
+          if [[ "${REF_TYPE}" == "tag" ]]; then
+              force_snapshot=""
+          fi
+          ./gradlew cV -q -Prelease.quiet ${force_snapshot}
+          TAG=$(echo "$(./gradlew cV -q -Prelease.quiet ${force_snapshot})")
+          echo ${TAG}
+          echo "force_snapshot=${force_snapshot}" >> "$GITHUB_ENV"
+          echo "tag=${TAG}" >> "$GITHUB_ENV"
+          SECOND_TAG=${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-event-tooling:v$(echo "${TAG}" | perl -p -e 's/^([0-9]+)\..*$/$1/g')
+          if [[ "${TAG}" =~ .*SNAPSHOT ]]; then
+            echo "On release we will also publish ${SECOND_TAG}"
+            SECOND_TAG=""
+          else
+            echo "Second tag: ${SECOND_TAG}"
+          fi
+          echo "second_tag=${SECOND_TAG}" >> "$GITHUB_ENV"
+          echo "docker_location=$(which docker)" >> "$GITHUB_ENV"
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
+
+      - name: Gradle build
+        id: generate_artifact
+        run: ./gradlew clean build -Pdocker-location="${{ env.docker_location }}" "${{ env.force_snapshot }}"
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
+
+      - uses: actions/upload-artifact@v3
+        if: failure() && steps.generate_artifact.outcome == 'failure'
+        with:
+          name: test-output
+          path: ./ronin-contract-event-plugin/build/reports/tests/test/
+          retention-days: 7
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          file: ./ronin-contract-event-plugin/codecov/test/jacocoTestReport.xml
+
+      - name: Upload report to DataDog
+        if: always() && !cancelled()
+        env:
+          DD_ENV: ci
+          DATADOG_SITE: datadoghq.com
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+        run: datadog-ci junit upload --service ronin-contract-event-tooling ./ronin-contract-event-plugin/build/test-results/test
+
+      - name: Publish Artifact
+        id: publish_artifact
+        run: ./gradlew publish "${{ env.force_snapshot }}"
+        env:
+          NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
+          NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
+
+      - name: Build and push main branch images
+        run: |-
+          docker build --platform linux/amd64,linux/arm64 --push --tag ${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-event-tooling:${{ env.tag }} ${{ env.second_tag }} .
+        working-directory: ./

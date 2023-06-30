@@ -1,38 +1,17 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     kotlin("jvm") version "1.8.0"
     `java-gradle-plugin`
-    `jacoco`
     `maven-publish`
 
-    id("org.jlleitschuh.gradle.ktlint") version "11.4.2"
-    id("com.dipien.releaseshub.gradle.plugin") version "4.0.0"
-    id("pl.allegro.tech.build.axion-release") version "1.15.3"
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.releasehub)
+    alias(libs.plugins.axion.release)
+    alias(libs.plugins.kover)
 }
 
-repositories {
-    maven {
-        url = uri("https://repo.devops.projectronin.io/repository/maven-snapshots/")
-        mavenContent {
-            snapshotsOnly()
-        }
-    }
-    maven {
-        url = uri("https://repo.devops.projectronin.io/repository/maven-releases/")
-        mavenContent {
-            releasesOnly()
-        }
-    }
-    maven {
-        url = uri("https://repo.devops.projectronin.io/repository/maven-public/")
-        mavenContent {
-            releasesOnly()
-        }
-    }
-    mavenLocal()
-    gradlePluginPortal()
-}
-
-// Java/Kotlin versioning
 java {
     sourceCompatibility = JavaVersion.VERSION_17
 }
@@ -46,41 +25,30 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 dependencies {
     implementation(libs.json.schema.validator)
+    implementation(libs.jsonschematopojo)
+    implementation(libs.axion.release)
+    implementation(platform("com.github.docker-java:docker-java-bom:3.3.1"))
+    implementation("com.github.docker-java:docker-java-core")
+    implementation("com.github.docker-java:docker-java-transport-zerodep")
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
     testImplementation(libs.commons.io)
-}
-
-jacoco {
-    toolVersion = "0.8.8"
-    // Custom reports directory can be specfied like this:
-    reportsDirectory.set(file("./codecov"))
+    testImplementation(libs.assertj)
+    testImplementation(gradleTestKit())
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.okhttp)
 }
 
 tasks {
-    jacocoTestReport {
-        reports {
-            xml.required.set(true)
-            csv.required.set(false)
-            html.required.set(true)
-        }
-    }
-
     test {
         useJUnitPlatform()
 
         testLogging {
-            events("passed", "skipped", "failed", "standardOut", "standardError")
+            events(org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED)
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-            showStandardStreams = true
-            showExceptions = true
         }
     }
-}
-
-tasks.test {
-    finalizedBy(tasks.jacocoTestReport)
 }
 
 scmVersion {
@@ -89,14 +57,15 @@ scmVersion {
         prefix.set("")
     }
     versionCreator { versionFromTag, position ->
-        val supportedHeads = setOf("HEAD", "master", "main")
-        if (!supportedHeads.contains(position.branch)) {
-            val jiraBranchRegex = Regex("(\\w+)-(\\d+)-(.+)")
-            val match = jiraBranchRegex.matchEntire(position.branch)
+        val supportedHeads = setOf("master", "main")
+        val branchName = System.getenv("REF_NAME")?.ifBlank { null } ?: position.branch
+        if (!supportedHeads.contains(branchName)) {
+            val jiraBranchRegex = Regex("(?:.*/)?(\\w+)-(\\d+)-(.+)")
+            val match = jiraBranchRegex.matchEntire(branchName)
             val branchExtension = match?.let {
                 val (project, number, _) = it.destructured
                 "$project$number"
-            } ?: position.branch
+            } ?: branchName
 
             "$versionFromTag-$branchExtension"
         } else {
@@ -132,3 +101,16 @@ publishing {
         }
     }
 }
+
+tasks.register<Copy>("copyInitializationFiles") {
+    from(layout.projectDirectory.dir("src/main/initializer"))
+    into(layout.buildDirectory.dir("initializer"))
+    filter(
+        ReplaceTokens::class,
+        "tokens" to mapOf(
+            "projectVersion" to project.version
+        )
+    )
+}
+
+tasks.getByName("build").dependsOn("copyInitializationFiles")

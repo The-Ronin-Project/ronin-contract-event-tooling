@@ -4,49 +4,56 @@ VERSIONS=$(ls | grep -E '^v\d+$')
 case $1 in
 
     test)
-        echo Validating all versions: ${VERSIONS}
-        for v in ${VERSIONS}
-        do
-            schema=$(ls ${v}/*-${v}.schema.json)
-            echo Validating schema \'${schema}\'
-            for example in $(ls ${v}/examples/*.json)
-            do
-                echo Validating example \'${example}\' against \'${schema}\'
-                output=$(ajv -s ${schema} -d ${example} -c ajv-formats)
-                success=$?
-                echo ${output}
-                if [[ ${success} -ne 0 ]]; then
-                    exit 1
-                fi
-            done
-        done
+        echo "Testing schemas"
+        ./gradlew --no-daemon check
         ;;
 
     doc)
-        echo Generating documentation for all versions: ${VERSIONS}
-        for v in ${VERSIONS}
-        do
-            mkdir -p ${v}/docs
-            echo Generating documentation for ${v}
-            output=$(generate-schema-doc "${v}/*-${v}.schema.json" ./${v}/docs)
-            success=$?
-            echo ${output}
-            if [[ ${success} -ne 0 ]]; then
-                exit 1
-            fi
-        done
+        echo Generating documentation
+        if [[ -e ./build/docs ]]; then
+          rm -rf ./build/docs
+        fi
+        mkdir -p ./build/docs
+        output=$(generate-schema-doc "./src/main/resources/schemas/*.schema.json" ./build/docs)
+        success=$?
+        echo ${output}
+        if [[ ${success} -ne 0 ]]; then
+            exit 1
+        fi
         ;;
 
     clean)
         echo "Cleaning generated files"
-        for v in ${VERSIONS}
-        do
-            rm -rf ${v}/docs/*
-        done
+        ./gradlew --no-daemon clean
+        ;;
+
+    initialize)
+        echo "Initializing the project with the necessary gradle setup"
+        gradle --no-daemon init --type basic --dsl kotlin
+        if [[ ! -e ./src/main/resources ]]; then
+          mkdir -p ./src/main/resources
+        fi
+        if [[ ! -e ./src/test/resources ]]; then
+          mkdir -p ./src/test/resources
+        fi
+        cp /usr/local/initializer/* .
+        cp /usr/local/initializer/.gitignore .
+        lastVersion=$(find . -maxdepth 1 -name 'v*' -type d | tail -n1)
+        if [[ -n "${lastVersion}" ]]; then
+          mv "${lastVersion}/examples" ./src/test/resources
+          mv "${lastVersion}" ./src/main/resources/schemas
+        else
+          if [[ ! -e ./src/main/resources/schemas ]]; then
+            mkdir -p ./src/main/resources/schemas
+          fi
+          if [[ ! -e ./src/test/resources/examples ]]; then
+            mkdir -p ./src/test/resources/examples
+          fi
+        fi
         ;;
 
     *)
         echo "Unknown command '$1'" >&2
-        echo "Usage: contract-tools [test|doc|clean]" >&2
+        echo "Usage: contract-tools [test|doc|clean|initialize]" >&2
         ;;
 esac

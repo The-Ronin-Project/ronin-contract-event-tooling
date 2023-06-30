@@ -1,16 +1,10 @@
-# ronin-contract-event-plugin
+# contract project name here
 
-This plugin provides validation and documentation generation for event contracts.
+This project holds an event / messaging contract.  See the `ronin-contract-event-tooling` repository for more information.
 
 To use this plugin, include the following in your plugins section of the Gradle build file:
 
-```kotlin
-plugins {
-    id("com.projectronin.event.contract") version "..."
-}
-```
-
-## Expected Setup
+## Layout
 
 This plugin makes several assumptions about the format of the consuming project.
 
@@ -71,7 +65,7 @@ Run when `assemble` is used, creates a tar file with just the schemas.
 
 Downloads schema dependencies.  See below
 
-## Dependencies
+# Dependencies
 
 You may use other schema files as dependencies of this one.  In your `build.gradle.kts` file, you can do something like the following:
 
@@ -83,25 +77,3 @@ dependencies {
 
 When you do this, and then run `./gradlew downloadSchemaDependencies`, the named dependencies are downloaded and unzipped under `src/main/resources/schemas/.dependencies/<artifactid>`.  You
 can then reference those schemas from yours, and they schemas and final classes will be included in the final jar/tar.
-
-## Versioning
-
-Versioning takes place using the [axion release plugin](https://github.com/allegro/axion-release-plugin).  This means that if a build is done from a tag, say, `v1.0.3`, and a build is published,
-the build will use version `1.0.3`.  If commits have taken place since that tag, `x.y.z-SNAPSHOT` will be used, where `z` is the next increment.  It is expected that release tags will be created
-manually through GitHub using the 'release' feature, and that they will be called `vX.Y.Z` using the standard semver semantics.
-
-To "prepare" the repo to publish a next major version, you can locally run `gradle markNextVersion -Prelease.version=X.Y.Z` and push the tag manually.
-
-To _revise an older version_, you will need to create a `vX` branch where `X` is the major version you want to publish, from the tag you want to revise.  E.g.:
-
-```bash
-git checkout v1.7.3
-git checkout -b v1
-# do some work
-git add '.'
-git commit -m "I did some work"
-```
-
-This should produce a new version, e.g. `1.7.4-SNAPSHOT`.
-
-You _probably_ don't want to merge this branch back to main, because that will confuse the versioning algorithm.
