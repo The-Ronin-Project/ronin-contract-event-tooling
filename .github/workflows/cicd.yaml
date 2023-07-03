@@ -61,14 +61,9 @@ jobs:
           echo "============================ TAGS ==============================="
           git tag
           echo "================================================================="
-          force_snapshot="-Prelease.forceSnapshot"
-          if [[ "${REF_TYPE}" == "tag" ]]; then
-              force_snapshot=""
-          fi
-          ./gradlew cV -q -Prelease.quiet ${force_snapshot}
-          TAG=$(echo "$(./gradlew cV -q -Prelease.quiet ${force_snapshot})")
+          ./gradlew cV -q -Prelease.quiet
+          TAG=$(echo "$(./gradlew cV -q -Prelease.quiet)")
           echo ${TAG}
-          echo "force_snapshot=${force_snapshot}" >> "$GITHUB_ENV"
           echo "tag=${TAG}" >> "$GITHUB_ENV"
           SECOND_TAG=${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-json-tooling:v$(echo "${TAG}" | perl -p -e 's/^([0-9]+)\..*$/$1/g')
           if [[ "${TAG}" =~ .*SNAPSHOT ]]; then
@@ -84,7 +79,7 @@ jobs:
 
       - name: Gradle build
         id: generate_artifact
-        run: ./gradlew clean build "${{ env.force_snapshot }}"
+        run: ./gradlew clean build
         env:
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.head_ref || github.ref_name }}
@@ -113,7 +108,7 @@ jobs:
 
       - name: Publish Artifact
         id: publish_artifact
-        run: ./gradlew publish "${{ env.force_snapshot }}"
+        run: ./gradlew publish
         env:
           NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
           NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}

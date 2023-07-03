@@ -171,6 +171,30 @@ class JsonContractPluginTestFunctionalTest {
             }
             assertThat(result.output).contains("1.0.0-feature-did-something-important-SNAPSHOT")
         }
+
+        @Test
+        fun `version branch works`() {
+            val result = setupTestProject(listOf("currentVersion", "--stacktrace")) { git ->
+                git.checkout().setCreateBranch(true).setName("version/v1").call()
+            }
+            assertThat(result.output).contains("1.0.0-SNAPSHOT")
+        }
+
+        @Test
+        fun `tag works`() {
+            val result = setupTestProject(listOf("currentVersion", "--stacktrace")) { git ->
+                git.tag().setName("v1.0.0").call()
+            }
+            assertThat(result.output).contains("1.0.0")
+        }
+
+        @Test
+        fun `next version works`() {
+            val result = setupTestProject(listOf("currentVersion", "--stacktrace")) { git ->
+                git.tag().setName("v1.1.0-alpha").call()
+            }
+            assertThat(result.output).contains("1.1.0-SNAPSHOT")
+        }
     }
 
     @Test
