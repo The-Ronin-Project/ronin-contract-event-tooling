@@ -1,7 +1,7 @@
-package com.projectronin.event.contract.task
+package com.projectronin.json.contract.task
 
 import com.networknt.schema.SpecVersion
-import com.projectronin.event.contract.EventContractExtension
+import com.projectronin.json.contract.EventContractExtension
 import org.apache.commons.io.FileUtils
 import org.gradle.api.GradleException
 import org.gradle.testfixtures.ProjectBuilder
@@ -27,7 +27,7 @@ class TestTaskTest {
             ProjectBuilder.builder()
                 .withProjectDir(projectDir)
                 .build()
-        project.plugins.apply("com.projectronin.event.contract")
+        project.plugins.apply("com.projectronin.json.contract")
         extension = project.extensions.getByType(EventContractExtension::class.java).apply {
             exampleSourceDir.set(projectDir.resolve("v1/examples"))
             schemaSourceDir.set(projectDir.resolve("v1"))

@@ -1,4 +1,4 @@
-package com.projectronin.event.contract
+package com.projectronin.json.contract
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -11,6 +11,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.internal.impldep.org.eclipse.jgit.api.Git
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.testcontainers.containers.GenericContainer
@@ -26,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * A simple functional test for the 'com.projectronin.rest.contract.support' plugin.
  */
-class EventContractPluginTestFunctionalTest {
+class JsonContractPluginTestFunctionalTest {
 
     @field:TempDir
     lateinit var tempFolder: File
@@ -134,6 +136,41 @@ class EventContractPluginTestFunctionalTest {
 
         assertThat(m2RepositoryDir.resolve("com/projectronin/contract/event/change-project-name-here-v1/1.0.0-SNAPSHOT/change-project-name-here-v1-1.0.0-SNAPSHOT.jar").exists()).isTrue()
         assertThat(m2RepositoryDir.resolve("com/projectronin/contract/event/change-project-name-here-v1/1.0.0-SNAPSHOT/change-project-name-here-v1-1.0.0-SNAPSHOT-schemas.tar.gz").exists()).isTrue()
+    }
+
+    @Nested
+    @DisplayName("Version tests")
+    inner class VersionTests {
+
+        @Test
+        fun `initial version works`() {
+            val result = setupTestProject(listOf("currentVersion", "--stacktrace"))
+            assertThat(result.output).contains("1.0.0-SNAPSHOT")
+        }
+
+        @Test
+        fun `branch works`() {
+            val result = setupTestProject(listOf("currentVersion", "--stacktrace")) { git ->
+                git.checkout().setCreateBranch(true).setName("DASH-3096-something").call()
+            }
+            assertThat(result.output).contains("1.0.0-DASH3096-SNAPSHOT")
+        }
+
+        @Test
+        fun `feature branch works`() {
+            val result = setupTestProject(listOf("currentVersion", "--stacktrace")) { git ->
+                git.checkout().setCreateBranch(true).setName("feature/DASH-3096-something").call()
+            }
+            assertThat(result.output).contains("1.0.0-DASH3096-SNAPSHOT")
+        }
+
+        @Test
+        fun `some other feature branch works`() {
+            val result = setupTestProject(listOf("currentVersion", "--stacktrace")) { git ->
+                git.checkout().setCreateBranch(true).setName("feature/did-something-important").call()
+            }
+            assertThat(result.output).contains("1.0.0-feature-did-something-important-SNAPSHOT")
+        }
     }
 
     @Test
@@ -256,7 +293,8 @@ class EventContractPluginTestFunctionalTest {
         fail: Boolean = false,
         sourceDirectory: String = "test/multiple-schemas-pass/v1/person-v1.schema.json",
         printFileTree: Boolean = false,
-        extraStuffToDo: () -> Unit = {}
+        env: Map<String, String> = emptyMap(),
+        extraStuffToDo: (Git) -> Unit = {}
     ): BuildResult {
         val git = Git.init().setDirectory(projectDir).call()
         File(projectDir, ".gitignore").writeText(
@@ -283,7 +321,7 @@ class EventContractPluginTestFunctionalTest {
         buildFile.appendText(
             """
             plugins {
-                id("com.projectronin.event.contract")
+                id("com.projectronin.json.contract")
             }
             """.trimIndent()
         )
@@ -292,14 +330,14 @@ class EventContractPluginTestFunctionalTest {
             buildFile.appendText("\n$this")
         }
 
-        extraStuffToDo()
+        extraStuffToDo(git)
 
         println("=".repeat(80))
         println(buildFile.readText())
         println("=".repeat(80))
 
         // Run the build
-        return runProjectBuild(buildArguments, fail).also {
+        return runProjectBuild(buildArguments, fail, env).also {
             if (printFileTree) {
                 projectDir.walk().forEach { file ->
                     println(file)
@@ -308,14 +346,15 @@ class EventContractPluginTestFunctionalTest {
         }
     }
 
-    private fun runProjectBuild(buildArguments: List<String>, fail: Boolean): BuildResult {
+    private fun runProjectBuild(buildArguments: List<String>, fail: Boolean, env: Map<String, String>): BuildResult {
         val runner = GradleRunner.create().withJaCoCo()
         runner.forwardOutput()
         runner.withEnvironment(
-            mapOf(
-                "REF_NAME" to "",
-                "SCHEMA_DOC_LOCATION" to "/Users/rosslodge/.pyenv/shims/generate-schema-doc"
-            )
+            if (env.containsKey("REF_NAME")) {
+                env
+            } else {
+                env + mapOf("REF_NAME" to "")
+            }
         )
         runner.withPluginClasspath()
         runner.withArguments(buildArguments)

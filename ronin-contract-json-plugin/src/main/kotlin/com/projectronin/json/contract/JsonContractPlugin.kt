@@ -1,8 +1,8 @@
-package com.projectronin.event.contract
+package com.projectronin.json.contract
 
 import com.networknt.schema.SpecVersion
-import com.projectronin.event.contract.task.DocumentationTask
-import com.projectronin.event.contract.task.TestTask
+import com.projectronin.json.contract.task.DocumentationTask
+import com.projectronin.json.contract.task.TestTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
@@ -24,10 +24,10 @@ import java.net.URI
 /**
  * The EventContractPlugin provides access to a set of tasks capable of validating and generating documentation for schemas.
  */
-class EventContractPlugin : Plugin<Project> {
+class JsonContractPlugin : Plugin<Project> {
 
     companion object {
-        private val logger: Logger = LoggerFactory.getLogger(EventContractPlugin::class.java)
+        private val logger: Logger = LoggerFactory.getLogger(JsonContractPlugin::class.java)
 
         object Locations {
             private const val defaultSourceDir = "src/main/resources/schemas"

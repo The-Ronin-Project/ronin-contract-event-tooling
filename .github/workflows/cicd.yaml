@@ -93,7 +93,7 @@ jobs:
         if: failure() && steps.generate_artifact.outcome == 'failure'
         with:
           name: test-output
-          path: ./ronin-contract-event-plugin/build/reports/tests/test/
+          path: ./ronin-contract-json-plugin/build/reports/tests/test/
           retention-days: 7
 
       - name: Upload Coverage
@@ -101,7 +101,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-          file: ./ronin-contract-event-plugin/codecov/test/jacocoTestReport.xml
+          file: ./ronin-contract-json-plugin/codecov/test/jacocoTestReport.xml
 
       - name: Upload report to DataDog
         if: always() && !cancelled()
@@ -109,7 +109,7 @@ jobs:
           DD_ENV: ci
           DATADOG_SITE: datadoghq.com
           DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-        run: datadog-ci junit upload --service ronin-contract-event-tooling ./ronin-contract-event-plugin/build/test-results/test
+        run: datadog-ci junit upload --service ronin-contract-event-tooling ./ronin-contract-json-plugin/build/test-results/test
 
       - name: Publish Artifact
         id: publish_artifact

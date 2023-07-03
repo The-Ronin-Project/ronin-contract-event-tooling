@@ -1,11 +1,11 @@
 # Event Contract Tooling
 
-This project builds a gradle plugin (see [ronin-contract-event-plugin](ronin-contract-event-plugin)) and a docker image that _runs_ that gradle plugin if you don't
+This project builds a gradle plugin (see [ronin-contract-json-plugin](ronin-contract-json-plugin)) and a docker image that _runs_ that gradle plugin if you don't
 want to install gradle locally.
 
 # Gradle Plugin
 
-For information on the Gradle plugin, see [ronin-contract-event-plugin](ronin-contract-event-plugin).
+For information on the Gradle plugin, see [ronin-contract-json-plugin](ronin-contract-json-plugin).
 
 # Tools
 

@@ -1,6 +1,6 @@
-rootProject.name = "ronin-contract-event-tooling"
+rootProject.name = "ronin-contract-json-tooling"
 
-include("ronin-contract-event-plugin")
+include("ronin-contract-json-plugin")
 
 for (project in rootProject.children) {
     project.buildFileName = "${project.name}.gradle.kts"

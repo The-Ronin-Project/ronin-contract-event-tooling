@@ -1,4 +1,4 @@
-package com.projectronin.event.contract.task
+package com.projectronin.json.contract.task
 
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.networknt.schema.JsonMetaSchema
@@ -8,8 +8,8 @@ import com.networknt.schema.NonValidationKeyword
 import com.networknt.schema.SpecVersion
 import com.networknt.schema.ValidationMessage
 import com.networknt.schema.uri.URIFactory
-import com.projectronin.event.contract.EventContractExtension
-import com.projectronin.event.contract.eventContractExtension
+import com.projectronin.json.contract.EventContractExtension
+import com.projectronin.json.contract.eventContractExtension
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
 import java.io.File
@@ -21,7 +21,7 @@ import java.net.URL
 /**
  * Executes Schema Validation tests against the present schema and examples.
  */
-open class TestTask : BaseEventTask() {
+open class TestTask : BaseJsonContractTask() {
     private val mapper = JsonMapper()
 
     /**

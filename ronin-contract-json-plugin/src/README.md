@@ -1,4 +1,4 @@
-# ronin-contract-event-plugin
+# ronin-contract-json-plugin
 
 This plugin provides validation and documentation generation for event contracts.
 

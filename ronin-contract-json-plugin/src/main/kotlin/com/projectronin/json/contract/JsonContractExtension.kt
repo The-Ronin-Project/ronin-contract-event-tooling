@@ -1,4 +1,4 @@
-package com.projectronin.event.contract
+package com.projectronin.json.contract
 
 import com.networknt.schema.SpecVersion.VersionFlag
 import org.gradle.api.Project
@@ -7,7 +7,7 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 /**
- * Extension defining the configuration for the [EventContractPlugin]
+ * Extension defining the configuration for the [JsonContractPlugin]
  */
 interface EventContractExtension {
     companion object {

@@ -50,7 +50,7 @@ tasks {
 
 scmVersion {
     tag {
-        initialVersion(pl.allegro.tech.build.axion.release.domain.properties.TagProperties.InitialVersionSupplier { _, _ -> "1.0.0" })
+        initialVersion { _, _ -> "1.0.0" }
         prefix.set("")
     }
     versionCreator { versionFromTag, position ->
@@ -76,8 +76,8 @@ version = scmVersion.version
 gradlePlugin {
     plugins {
         create("eventContractPlugin") {
-            id = "com.projectronin.event.contract"
-            implementationClass = "com.projectronin.event.contract.EventContractPlugin"
+            id = "com.projectronin.json.contract"
+            implementationClass = "com.projectronin.json.contract.JsonContractPlugin"
         }
     }
 }

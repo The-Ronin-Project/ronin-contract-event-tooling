@@ -1,4 +1,4 @@
-package com.projectronin.event.contract.task
+package com.projectronin.json.contract.task
 
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
@@ -16,7 +16,7 @@ import kotlin.io.path.setPosixFilePermissions
 /**
  * Task responsible for generating documentation for Event contracts.
  */
-open class DocumentationTask @Inject constructor(private val execOperations: ExecOperations) : BaseEventTask() {
+open class DocumentationTask @Inject constructor(private val execOperations: ExecOperations) : BaseJsonContractTask() {
     @TaskAction
     fun generateDocumentation() {
         DocumentationGenerator(execOperations, project).generate()

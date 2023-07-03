@@ -1,4 +1,4 @@
-package com.projectronin.event.contract
+package com.projectronin.json.contract
 
 import com.networknt.schema.SpecVersion
 import org.assertj.core.api.Assertions.assertThat
@@ -7,10 +7,10 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.Test
 
-class EventContractPluginTest {
+class JsonContractPluginTest {
     private fun getProject(): Project {
         val project = ProjectBuilder.builder().withName("simple-test-project").build()
-        project.plugins.apply("com.projectronin.event.contract")
+        project.plugins.apply("com.projectronin.json.contract")
         return project
     }
 
