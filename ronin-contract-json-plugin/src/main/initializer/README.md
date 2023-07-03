@@ -1,6 +1,6 @@
 # contract project name here
 
-This project holds an event / messaging contract.  See the `ronin-contract-event-tooling` repository for more information.
+This project holds an event / messaging contract.  See the `ronin-contract-json-tooling` repository for more information.
 
 To use this plugin, include the following in your plugins section of the Gradle build file:
 

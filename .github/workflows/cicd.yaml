@@ -70,7 +70,7 @@ jobs:
           echo ${TAG}
           echo "force_snapshot=${force_snapshot}" >> "$GITHUB_ENV"
           echo "tag=${TAG}" >> "$GITHUB_ENV"
-          SECOND_TAG=${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-event-tooling:v$(echo "${TAG}" | perl -p -e 's/^([0-9]+)\..*$/$1/g')
+          SECOND_TAG=${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-json-tooling:v$(echo "${TAG}" | perl -p -e 's/^([0-9]+)\..*$/$1/g')
           if [[ "${TAG}" =~ .*SNAPSHOT ]]; then
             echo "On release we will also publish ${SECOND_TAG}"
             SECOND_TAG=""
@@ -109,7 +109,7 @@ jobs:
           DD_ENV: ci
           DATADOG_SITE: datadoghq.com
           DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-        run: datadog-ci junit upload --service ronin-contract-event-tooling ./ronin-contract-json-plugin/build/test-results/test
+        run: datadog-ci junit upload --service ronin-contract-json-tooling ./ronin-contract-json-plugin/build/test-results/test
 
       - name: Publish Artifact
         id: publish_artifact
@@ -122,5 +122,5 @@ jobs:
 
       - name: Build and push main branch images
         run: |-
-          docker build --platform linux/amd64,linux/arm64 --push --tag ${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-event-tooling:${{ env.tag }} ${{ env.second_tag }} .
+          docker build --platform linux/amd64,linux/arm64 --push --tag ${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-json-tooling:${{ env.tag }} ${{ env.second_tag }} .
         working-directory: ./

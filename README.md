@@ -17,9 +17,9 @@ Validation is done though the gradle plugin, using [com.networknt:json-schema-va
 
 Documentation generation uses [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans).
 
-# Usage
+# Docket Usage (Deprecated)
 
-`docker run -it -v "<schema_root_directory>:/app" ronin-contract-event-tooling:<tag> contract-tools [clean|test|doc|initialize]`
+`docker run -it -v "<schema_root_directory>:/app" ronin-contract-json-tooling:<tag> contract-tools [clean|test|doc|initialize]`
 
 `clean` (deprecated: use gradle plugin): Remove all generated files.
 
