@@ -11,8 +11,10 @@ on:
 
 jobs:
   build_and_test:
-    name: build_and_test
-    uses: projectronin/github/.github/workflows/event_contract_cicd_gradle.yaml@main
-    secrets:
-      nexus_user:      ${{ secrets.NEXUS_MAVEN_USER }}
-      nexus_token:     ${{ secrets.NEXUS_MAVEN_TOKEN }}
+    runs-on: self-hosted
+    steps:
+      - name: test and build
+        uses: projectronin/github/.github/actions/json-contract-cicd-gradle@feature/update-event-workflow-to-gradle
+        with:
+          nexus_user: ${{ secrets.NEXUS_MAVEN_USER }}
+          nexus_token: ${{ secrets.NEXUS_MAVEN_TOKEN }}
