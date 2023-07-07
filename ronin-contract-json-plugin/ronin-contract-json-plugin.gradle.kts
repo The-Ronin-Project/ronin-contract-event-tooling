@@ -1,6 +1,5 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     kotlin("jvm") version "1.8.0"
     `java-gradle-plugin`
