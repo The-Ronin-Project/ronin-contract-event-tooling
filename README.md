@@ -1,29 +1,9 @@
-# Event Contract Tooling docker image
+# ronin-contract-event-tooling
 
-This docker image contains the tooling used to validate JSON schema contracts as well as generate documentation from the
-schema.
+This repository is deprecated.  Instead, use the [ronin-contract-json-plugin](https://github.com/projectronin/ronin-gradle/tree/main/gradle-plugins/ronin-contract-json-plugin).
 
-# Gradle Plugin
+To upgrade a repository using v1 of the tools, you may do:
 
-For information on the Gradle variant, see [ronin-contract-event-plugin](ronin-contract-event-plugin).
-
-# Tools
-
-## Validation
-
-Validation tooling is based on [ajv-cli](https://github.com/ajv-validator/ajv-cli)
-and [ajv-formats](https://github.com/ajv-validator/ajv-formats).
-
-## Docs
-
-Documentation generation uses [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans).
-
-# Usage
-
-`docker run -it -v "<schema_root_directory>:/app" ronin-contract-event-tooling:<tag> contract-tools [clean|test|doc]`
-
-`clean`: Remove all generated files.
-
-`test`: Test all versioned schemas against the curated examples.
-
-`docs`: Generate HTML documentation for each versioned schema.
+```bash
+docker run --rm -v .:/app docker-repo.devops.projectronin.io/ronin-contract-event-tooling:v2 /usr/local/bin/contract-tools initialize
+```

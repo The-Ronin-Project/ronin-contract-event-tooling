@@ -1,12 +1,13 @@
-FROM docker-proxy.devops.projectronin.io/alpine:3.16
+FROM gradle:8.1.1-jdk17
 
-RUN adduser -S -D ronin
-RUN apk add bash npm python3 py3-pip
-RUN npm install -g ajv-cli ajv-formats
-RUN pip install json-schema-for-humans
+RUN useradd -rm ronin
+RUN apt update && apt-get install -y python3 python3-pip && apt-get clean && pip install json-schema-for-humans
 
 ADD --chown=ronin ./contract-tools /usr/local/bin
 RUN chmod 755 /usr/local/bin/contract-tools
+ADD --chown=ronin src/main/initializer /usr/local/initializer
+ADD --chown=ronin src/main/initializer/.gitignore /usr/local/initializer/.gitignore
+
 USER ronin
 WORKDIR /app
 
