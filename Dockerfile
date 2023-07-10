@@ -5,8 +5,8 @@ RUN apt update && apt-get install -y python3 python3-pip && apt-get clean && pip
 
 ADD --chown=ronin ./contract-tools /usr/local/bin
 RUN chmod 755 /usr/local/bin/contract-tools
-ADD --chown=ronin ronin-contract-json-plugin/build/initializer /usr/local/initializer
-ADD --chown=ronin ronin-contract-json-plugin/src/main/initializer/.gitignore /usr/local/initializer/.gitignore
+ADD --chown=ronin src/main/initializer /usr/local/initializer
+ADD --chown=ronin src/main/initializer/.gitignore /usr/local/initializer/.gitignore
 
 USER ronin
 WORKDIR /app

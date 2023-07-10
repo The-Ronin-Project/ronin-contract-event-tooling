@@ -1,10 +1,4 @@
-rootProject.name = "ronin-contract-json-tooling"
-
-include("ronin-contract-json-plugin")
-
-for (project in rootProject.children) {
-    project.buildFileName = "${project.name}.gradle.kts"
-}
+rootProject.name = "ronin-contract-event-template"
 
 pluginManagement {
     repositories {
@@ -23,5 +17,10 @@ dependencyResolutionManagement {
         }
         mavenLocal()
         gradlePluginPortal()
+    }
+    versionCatalogs {
+        create("roningradle") {
+            from("com.projectronin.services.gradle:ronin-gradle-catalog:2.0.0-feature-new-version-new-standards-SNAPSHOT")
+        }
     }
 }
