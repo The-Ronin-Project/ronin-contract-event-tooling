@@ -20,7 +20,7 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("roningradle") {
-            from("com.projectronin.services.gradle:ronin-gradle-catalog:2.0.0-feature-new-version-new-standards-SNAPSHOT")
+            from("com.projectronin.services.gradle:ronin-gradle-catalog:2.0.0")
         }
     }
 }
