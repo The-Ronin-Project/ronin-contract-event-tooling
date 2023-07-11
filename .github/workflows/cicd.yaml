@@ -50,10 +50,13 @@ jobs:
           TAG=$(git describe --tags)
           echo "tag=${TAG}" >> "$GITHUB_ENV"
           if [[ ${REF_TYPE} == "tag" ]]; then
+            SECOND_TAG_PREFIX="--tag"
             SECOND_TAG=${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-json-tooling:v$(echo "${TAG}" | perl -p -e 's/^v?([0-9]+)\..*$/$1/g')
           else
+            SECOND_TAG_PREFIX=""
             SECOND_TAG=""
           fi
+          echo "second_tag_prefix=${SECOND_TAG_PREFIX}" >> "$GITHUB_ENV"
           echo "second_tag=${SECOND_TAG}" >> "$GITHUB_ENV"
         env:
           REF_TYPE: ${{ github.ref_type }}
@@ -61,5 +64,5 @@ jobs:
 
       - name: Build and push main branch images
         run: |-
-          docker build --platform linux/amd64,linux/arm64 --push --tag ${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-json-tooling:${{ env.tag }} ${{ env.second_tag }} .
+          docker build --platform linux/amd64,linux/arm64 --push --tag ${{ vars.DOCKER_WRITE_REPO }}/ronin-contract-json-tooling:${{ env.tag }} ${{ env.second_tag_prefix }} ${{ env.second_tag }} .
         working-directory: ./
